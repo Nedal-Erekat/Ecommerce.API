@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "7uhtmE0QKA8=",
+  "success": true,
+  "projectFilePath": "C:\\repos\\New folder\\Ecommerce.Api\\Ecommerce.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Nedal.Erekat\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.0-rc.2.25502.107\\microsoft.aspnetcore.openapi.10.0.0-rc.2.25502.107.nupkg.sha512",
+    "C:\\Users\\Nedal.Erekat\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
