@@ -27,4 +27,12 @@ public class AuthController : ControllerBase
         return StatusCode(StatusCodes.Status201Created);
     }
 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto dto)
+    {
+        var token = await _authService.RefreshTokenAsync(dto.RefreshToken);
+        return Ok(new { accessToken = token });
+    }
+
+
 }

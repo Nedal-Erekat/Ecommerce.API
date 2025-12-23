@@ -21,9 +21,9 @@ public class ProductsController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] int page, [FromQuery] int pageSize)
     {
-        return Ok(await _productService.GetAllAsync());
+        return Ok(await _productService.GetAllAsync(page, pageSize));
     }
 
     [HttpGet("{id:int}")]

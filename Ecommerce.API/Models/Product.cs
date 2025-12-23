@@ -1,5 +1,8 @@
-﻿namespace Ecommerce.API.Models
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Ecommerce.API.Models
 {
+    [Index(nameof(Name))]
     public class Product
     {
         public int Id { get; set; }
@@ -9,4 +12,5 @@
         public int Stock { get; set; }
 
     }
+
 }

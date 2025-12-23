@@ -1,10 +1,12 @@
 ﻿using Ecommerce.API.Data;
+using Ecommerce.API.DTOs;
 using Ecommerce.API.Models;
 using Ecommerce.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 public class AuthService : IAuthService
@@ -52,16 +54,48 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public async Task<string> LoginAsync(string username, string password)
+    public async Task<AuthResponseDto> LoginAsync(string username, string password)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Username == username);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        if (user == null)
             throw new UnauthorizedAccessException("Invalid username or password");
 
-        return GenerateJwtToken(user);
+        if (user.LockoutEnd > DateTime.UtcNow)
+            throw new UnauthorizedAccessException("Account locked. Try again later.");
+
+        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        {
+            user.FailedLoginAttempts++;
+
+            if (user.FailedLoginAttempts >= 5)
+            {
+                user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+                user.FailedLoginAttempts = 0;
+            }
+
+            await _context.SaveChangesAsync();
+            throw new UnauthorizedAccessException("Invalid username or password");
+        }
+
+        // ✅ Successful login → reset
+        user.FailedLoginAttempts = 0;
+        user.LockoutEnd = null;
+
+        var accessToken = GenerateJwtToken(user);
+        user.RefreshToken = GenerateRefreshToken();
+        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
+
+        await _context.SaveChangesAsync();
+
+        return new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            RefreshToken = user.RefreshToken,
+            ExpiresIn = int.Parse(_config["Jwt:ExpireMinutes"]!) * 60
+        };
     }
+
 
     public async Task RegisterAsync(string username, string password)
     {
@@ -81,4 +115,24 @@ public class AuthService : IAuthService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
     }
+
+    private static string GenerateRefreshToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+    }
+
+    public async Task<string> RefreshTokenAsync(string refreshToken)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.RefreshToken == refreshToken &&
+            u.RefreshTokenExpiresAt > DateTime.UtcNow);
+
+        if (user == null)
+            throw new UnauthorizedAccessException("Invalid refresh token");
+
+        var newAccessToken = GenerateJwtToken(user);
+
+        return newAccessToken;
+    }
+
 }
