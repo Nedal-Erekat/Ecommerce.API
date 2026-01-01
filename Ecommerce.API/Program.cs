@@ -85,6 +85,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddMemoryCache();
+builder.Services.AddResponseCompression();
 
 var app = builder.Build();
 
@@ -104,6 +106,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseResponseCompression();
 
 if (app.Environment.IsDevelopment())
 {
