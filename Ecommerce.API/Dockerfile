@@ -2,6 +2,9 @@
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /app
 EXPOSE 80
+ENV ASPNETCORE_URLS=http://+:80
+ENV DOTNET_ENVIRONMENT=Development
+ENV ASPNETCORE_ENVIRONMENT=Development
 
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
@@ -9,7 +12,6 @@ WORKDIR /src
 COPY ["Ecommerce.API.csproj", "./"]
 RUN dotnet restore "./Ecommerce.API.csproj"
 COPY . .
-WORKDIR "/src/."
 RUN dotnet build "Ecommerce.API.csproj" -c Release -o /app/build
 
 # Publish stage
